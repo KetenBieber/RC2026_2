@@ -15,6 +15,8 @@
 #include "topic_pool.h"
 #include "topics.hpp"
 
+#include <cstdint>
+
 osThreadId_t ControlTaskHandle;
 
 // 发布者：发送底盘控制命令 (静态初始化，避免动态内存分配)
@@ -37,15 +39,6 @@ void controlTask(void *argument) {
 
   for (;;) {
     // 示例：构造底盘控制命令并发布
-
-    // 从遥控器、Xbox或其他来源获取数据
-    // 这里作为示例，值是硬编码的
-    // pub_cmd.linear_x_ = 1.0f; // 前进速度
-    // pub_cmd.linear_y_ = 0.0f; // 左右速度
-    // pub_cmd.omega_ = 0.5f;    // 转速
-
-    // 发布到"chassis_cmd"主题
-    // 所有订阅者都会接收到这条消息
     if (g_chassis_cmd_pub.IsValid()) {
       g_chassis_cmd_pub.Publish(pub_cmd);
     }

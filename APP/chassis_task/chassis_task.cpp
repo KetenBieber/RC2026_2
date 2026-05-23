@@ -18,6 +18,7 @@
 #include "topic_pool.h"
 #include "topics.hpp"
 
+#include <cstdint>
 #include <cstring>
 
 osThreadId_t ChassisTaskHandle;
@@ -60,6 +61,7 @@ void chassisTask(void *argument) {
   TickType_t currentTime = xTaskGetTickCount();
 
   chassisInit();
+  int i = 0;
 
   for (;;) {
     // 尝试从 "chassis_cmd" 主题获取最新的控制命令
@@ -68,6 +70,9 @@ void chassisTask(void *argument) {
       // 成功获取新的控制命令
       cmdCalculate(cmd);
 
+      if (i == 8) {
+        i = 0;
+      }
       // 应用电机速度
       // chassis_motor1.setSpeed(motor_speed[0]);
       // chassis_motor2.setSpeed(motor_speed[1]);

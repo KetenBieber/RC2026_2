@@ -52,14 +52,14 @@ void osTaskInit(void) {
 
   const osThreadAttr_t DebugTaskHandle_attributes = {
       .name = "Debug_TaskHandle",
-      .stack_size = 256 * 4,
+      .stack_size = 128 * 4,
       .priority = (osPriority_t)osPriorityNormal,
   };
   Debug_TaskHandle = osThreadNew(debugTask, NULL, &DebugTaskHandle_attributes);
 
   const osThreadAttr_t ChassisTaskHandle_attributes = {
       .name = "Chassis_TaskHandle",
-      .stack_size = 256 * 4,
+      .stack_size = 128 * 4,
       .priority = (osPriority_t)osPriorityNormal,
   };
   ChassisTaskHandle =
@@ -67,7 +67,7 @@ void osTaskInit(void) {
 
   const osThreadAttr_t ControlTaskHandle_attributes = {
       .name = "Control_TaskHandle",
-      .stack_size = 256 * 4,
+      .stack_size = 128 * 4,
       .priority = (osPriority_t)osPriorityNormal,
   };
   ControlTaskHandle =
@@ -75,7 +75,7 @@ void osTaskInit(void) {
 
   const osThreadAttr_t Uart3ProcessTaskHandle_attributes = {
       .name = "Uart3Process_TaskHandle",
-      .stack_size = 256 * 4,
+      .stack_size = 128 * 4,
       .priority = (osPriority_t)osPriorityNormal1,
   };
   uart3ProcessTaskHandle =
@@ -83,7 +83,7 @@ void osTaskInit(void) {
 
   const osThreadAttr_t UsbcdcProcessTaskHandle_attributes = {
       .name = "UsbcdcProcess_TaskHandle",
-      .stack_size = 256 * 4,
+      .stack_size = 128 * 4,
       .priority = (osPriority_t)osPriorityNormal1,
   };
   usbcdcProcessTaskHandle =

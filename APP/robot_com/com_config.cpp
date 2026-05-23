@@ -64,6 +64,9 @@ ROSProtocol ros_protocol(nullptr, &UsbPort::Instance());
 
 uint8_t comServiceInit() {
   // can外设初始化
+  canFilterInit(&hfdcan1, FDCAN_STANDARD_ID, FDCAN_FILTER_TO_RXFIFO0, 0, 0);
+  canFilterInit(&hfdcan1, FDCAN_STANDARD_ID, FDCAN_FILTER_TO_RXFIFO1, 0, 0);
+  bspCanInit(&hfdcan1);
   canFilterInit(&hfdcan2, FDCAN_STANDARD_ID, FDCAN_FILTER_TO_RXFIFO0, 0, 0);
   canFilterInit(&hfdcan2, FDCAN_STANDARD_ID, FDCAN_FILTER_TO_RXFIFO1, 0, 0);
   bspCanInit(&hfdcan2);
@@ -169,9 +172,18 @@ void can3SendTask(void *argument) {
   }
 }
 
+// 根据不同的操作系统封装
+// 你windows下使用thread库，它
+// Linux使用thread
+
+int a = 0;
+
 void uart3RxProcessTask(void *argument) {
   (void)argument;
   for (;;) {
+    if (uart3_rx_semphore == NULL) {
+      a++;
+    }
     (void)osSemaphoreAcquire(uart3_rx_semphore, osWaitForever);
 
     UartPort::Packet packet{};
@@ -187,6 +199,7 @@ void uart3RxProcessTask(void *argument) {
         }
       }
     }
+    vTaskDelay(1);
   }
 }
 
@@ -257,6 +270,7 @@ void usbCdcProcessTask(void *argument) {
 
   (void)argument;
 
+  // 数据实时性要求高，你这个处理任务肯定是优先级要高一点
   for (;;) {
     (void)osSemaphoreAcquire(usbcdc_rx_semphore, osWaitForever);
 
