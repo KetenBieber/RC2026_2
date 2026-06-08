@@ -15,6 +15,8 @@
 #pragma once
 
 #include "Canbus.hpp"
+#include "SoftwareWatchdog.hpp"
+#include "Watchdog.hpp"
 #include <cmath>
 #include <stdint.h>
 
@@ -23,19 +25,22 @@
 #define RPM_2_ANGLE_PER_SEC 6.0f       // 360/60,转每分钟 转化 度每秒
 #define RPM_2_RAD_PER_SEC 0.104719755f // ×2pi/60sec,转每分钟 转化 弧度每秒
 
-class C610Motor;
-
 class MotorBase {
 public:
   MotorBase() = default;
 
   // 对外接口
   void setMotorCmd(float cmd) {
-    if (cmd > max_cmd_)
-      cmd = max_cmd_;
-    if (cmd < -max_cmd_)
-      cmd = -max_cmd_;
-    cmd_ = cmd;
+    if (offline_wd_.state() == WatchdogState::TRIGGERED) {
+      // 电机offline
+      cmd_ = 0;
+    } else {
+      if (cmd > max_cmd_)
+        cmd = max_cmd_;
+      if (cmd < -max_cmd_)
+        cmd = -max_cmd_;
+      cmd_ = cmd;
+    }
   }
 
   void setMotorReduction(const float config) { reduction_ratio_ = config; }
@@ -51,6 +56,14 @@ public:
   float getRawCurrentSumPos(void) const { return raw_sum_pos_; }
   float getRawCurrentSpeed(void) const { return raw_speed_; }
   float getRawCurrentTorque(void) const { return raw_torque_; }
+
+  // offline 检测
+  void setOfflineDeadline(const uint32_t offline_deadline) {
+    offline_wd_.setTimeout(offline_deadline);
+  }
+  void setOfflineDebounce(const uint32_t offline_debounce) {
+    offline_wd_.setDebounce(offline_debounce);
+  }
 
   // 电机最原始output指令(速度/位置/电流)
   float cmd_;
@@ -71,6 +84,14 @@ public:
   float speed_{0};       // 速度
   float torque_{0};      // 力矩
   float temperature_{0}; // 温度
+
+  // off-line check
+  // ,电机类只知道自己绑定了一个看门狗，但是不知道绑定了什么行为，绑定什么行为是应用层决定的
+  SoftwareWatchdog<DWTMsSource> offline_wd_{
+      50,
+      {},
+      WatchdogMode::AUTO_REARM, // 数据恢复自动清除
+      2};
 };
 
 enum DJIMotorCanGroup {
@@ -91,15 +112,21 @@ public:
             bool tx_is_extid)
       : CanDevice(manager, id, is_extid, tx_id, tx_is_extid) {}
 
-  void init(float reduction_ratio = 36, float max_cmd = 10000.f) {
+  void init(float reduction_ratio = 36, float max_cmd = 10000.f,
+            uint32_t offline_deadline = 50, uint32_t offline_debounce = 2) {
     setMotorReduction(reduction_ratio);
     setMaxCmd(max_cmd);
+    setOfflineDeadline(offline_deadline);
+    setOfflineDebounce(offline_debounce);
   }
 
   void onRx(const uint8_t data[8], uint8_t len) override {
     if (len < 8)
       return;
-
+    if (offline_wd_.isIdle()) {
+      offline_wd_.arm();
+    }
+    offline_wd_.feed();
     // byte 0-1: 编码器(单圈位置 0-8191)
     encoder_ = (uint16_t)(data[0] << 8 | data[1]);
     if (is_encoder_init) {
@@ -172,14 +199,21 @@ public:
             bool tx_is_extid)
       : CanDevice(manager, id, is_extid, tx_id, tx_is_extid) {}
 
-  void init(float reduction_ratio = 19, float max_cmd = 20000.0f) {
+  void init(float reduction_ratio = 19, float max_cmd = 20000.0f,
+            uint32_t offline_deadline = 50, uint32_t offline_debounce = 2) {
     setMotorReduction(reduction_ratio);
     setMaxCmd(max_cmd);
+    setOfflineDeadline(offline_deadline);
+    setOfflineDebounce(offline_debounce);
   }
 
   void onRx(const uint8_t data[8], uint8_t len) override {
     if (len < 8)
       return;
+    if (offline_wd_.isIdle()) {
+      offline_wd_.arm();
+    }
+    offline_wd_.feed();
 
     // byte 0-1: 编码器(单圈位置 0-8191)
     encoder_ = (uint16_t)(data[0] << 8 | data[1]);
@@ -312,6 +346,10 @@ public:
   void onRx(const uint8_t data[8], uint8_t len) override {
     if (len < 6)
       return;
+    if (offline_wd_.isIdle()) {
+      offline_wd_.arm();
+    }
+    offline_wd_.feed();
 
     // 达妙 MIT 反馈：byte1-2 位置，byte3-4高4bit 速度，byte4低4bit-5 扭矩
     pos_raw_ = static_cast<uint16_t>((data[1] << 8) | data[2]);

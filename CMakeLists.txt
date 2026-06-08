@@ -76,6 +76,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/APP/robot_task
     ${CMAKE_SOURCE_DIR}/APP/chassis_task
     ${CMAKE_SOURCE_DIR}/APP/control_task
+    ${CMAKE_SOURCE_DIR}/APP/watchdog_task
     ${CMAKE_SOURCE_DIR}/BSP
     ${CMAKE_SOURCE_DIR}/Module/controller
     ${CMAKE_SOURCE_DIR}/Module/motor
@@ -83,6 +84,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/Module/servo
     ${CMAKE_SOURCE_DIR}/Module/xbox
     ${CMAKE_SOURCE_DIR}/Module/pc
+    ${CMAKE_SOURCE_DIR}/Module/watchdog
 
     # Add user defined include paths
 )

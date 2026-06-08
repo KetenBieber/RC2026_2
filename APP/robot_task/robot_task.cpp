@@ -12,6 +12,7 @@
 #include "com_config.h"
 #include "control_task.h"
 #include "debug_task.h"
+#include "watchdog_task.h"
 
 /* module层接口头文件 */
 
@@ -24,6 +25,7 @@ extern osThreadId_t Debug_TaskHandle;
 extern osThreadId_t ChassisTaskHandle;
 extern osThreadId_t ControlTaskHandle;
 extern osThreadId_t usbcdcProcessTaskHandle;
+extern osThreadId_t Watchdog_TaskHandle;
 
 void osTaskInit(void) {
   const osThreadAttr_t CAN1_SendTaskHandle_attributes = {
@@ -88,4 +90,12 @@ void osTaskInit(void) {
   };
   usbcdcProcessTaskHandle =
       osThreadNew(usbCdcProcessTask, NULL, &UsbcdcProcessTaskHandle_attributes);
+
+  const osThreadAttr_t WatchdogTaskHandle_attributes = {
+      .name = "Watchdog_TaskHandle",
+      .stack_size = 128 * 4,
+      .priority = (osPriority_t)osPriorityNormal,
+  };
+  Watchdog_TaskHandle =
+      osThreadNew(watchdogTask, NULL, &WatchdogTaskHandle_attributes);
 }
